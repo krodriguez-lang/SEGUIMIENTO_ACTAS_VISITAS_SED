@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual CASE – Seguimiento de Actas de Supervisión</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap');
+
+  :root {
+    --teal:       #385988;
+    --teal-dark:  #1e3a5f;
+    --teal-light: #eaf0f8;
+    --teal-mid:   #b8cfe4;
+    --blue:       #385988;
+    --blue-light: #eaf0f8;
+    --blue-mid:   #b8cfe4;
+    --gray:       #7a8a9a;
+    --gray-light: #f4f6f8;
+    --gray-mid:   #d0d8e2;
+    --orange:     #F68D2E;
+    --orange-light:#fef3e8;
+    --orange-mid: #fbd4a8;
+    --white:      #ffffff;
+    --text:       #1a2535;
+    --text-soft:  #4b5a6e;
+    --border:     #dde3ec;
+    --radius:     12px;
+    --radius-lg:  20px;
+    --shadow:     0 4px 24px rgba(30,58,95,0.08);
+    --shadow-lg:  0 12px 48px rgba(30,58,95,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Century Gothic', 'CenturyGothic', 'AppleGothic', 'Nunito', sans-serif;
+    font-size: 11pt;
+    background: #f0f3f8;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 256px; min-width: 256px;
+    background: var(--teal-dark);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 28px 22px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar-logo .org-tag {
+    font-size: 9.5pt; letter-spacing: 1.5px; color: var(--orange);
+    text-transform: uppercase; display: block; margin-bottom: 6px; font-weight: 700;
+  }
+  .sidebar-logo h1 { font-size: 16pt; color: white; line-height: 1.3; font-weight: 700; }
+  .sidebar-nav { padding: 14px 0; flex: 1; }
+  .nav-section {
+    padding: 10px 18px 4px; font-size: 8.5pt; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35); font-weight: 700;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; cursor: pointer;
+    color: rgba(255,255,255,0.65); font-size: 10.5pt;
+    transition: all 0.2s; border-left: 3px solid transparent;
+    margin: 1px 0; text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+  .nav-item.active { background: rgba(246,141,46,0.18); color: white; font-weight: 700; border-left-color: var(--orange); }
+  .nav-item .icon { font-size: 14pt; width: 20px; text-align: center; }
+
+  /* MAIN */
+  .main { margin-left: 256px; flex: 1; display: flex; flex-direction: column; }
+
+  /* TOPBAR */
+  .topbar {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 0 36px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 0 var(--border);
+  }
+  .topbar-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 10pt; color: var(--gray); }
+  .topbar-breadcrumb .current { color: var(--teal-dark); font-weight: 700; }
+  .topbar-breadcrumb .sep { color: var(--border); }
+  .badge-version {
+    font-size: 9.5pt; background: var(--orange); color: white;
+    padding: 4px 12px; border-radius: 6px; font-weight: 700;
+  }
+
+  /* CONTENT */
+  .content { padding: 36px; max-width: 880px; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 32px; }
+  .page-header .tag {
+    font-size: 9pt; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--teal); display: inline-block; margin-bottom: 8px; font-weight: 700;
+  }
+  .page-header h2 { font-size: 26pt; color: var(--teal-dark); line-height: 1.2; margin-bottom: 10px; font-weight: 700; }
+  .page-header p { font-size: 11pt; color: var(--text-soft); line-height: 1.7; max-width: 640px; }
+
+  /* HERO */
+  .hero-card {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--blue) 60%, #4a6fa5 100%);
+    border-radius: var(--radius-lg); padding: 38px; color: white;
+    position: relative; overflow: hidden; margin-bottom: 28px;
+  }
+  .hero-card::before {
+    content: ''; position: absolute; top: -50px; right: -50px;
+    width: 200px; height: 200px; border-radius: 50%; background: rgba(246,141,46,0.15);
+  }
+  .hero-card::after {
+    content: ''; position: absolute; bottom: -30px; right: 80px;
+    width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.07);
+  }
+  .hero-card .code-tag {
+    font-size: 9pt; color: var(--orange); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 12px; font-weight: 700; display: block;
+  }
+  .hero-card h2 { font-size: 22pt; line-height: 1.25; margin-bottom: 12px; position: relative; z-index: 1; font-weight: 700; }
+  .hero-card p { font-size: 11pt; color: rgba(255,255,255,0.82); line-height: 1.7; max-width: 520px; position: relative; z-index: 1; }
+
+  /* CARD */
+  .card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px; }
+  .card-header { padding: 16px 22px; background: var(--teal); display: flex; align-items: center; gap: 12px; }
+  .card-header h3 { color: white; font-size: 12pt; font-weight: 700; }
+  .card-header .icon-bg {
+    width: 34px; height: 34px; background: rgba(255,255,255,0.15);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16pt;
+  }
+  .card-body { padding: 22px; }
+
+  /* INFO GRID */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .info-tile {
+    background: var(--teal-light); border-radius: 10px; padding: 14px 16px;
+    font-size: 11pt; color: var(--teal-dark); border-left: 4px solid var(--teal);
+  }
+
+  /* BUTTONS */
+  .cta-row { display: flex; gap: 12px; margin-top: 4px; }
+  .btn-primary {
+    flex: 1; background: var(--teal); color: white; border: none;
+    border-radius: var(--radius); padding: 14px; font-size: 11pt; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--teal-dark); }
+  .btn-secondary {
+    flex: 1; background: white; color: var(--teal-dark); border: 2px solid var(--teal-mid);
+    border-radius: var(--radius); padding: 14px; font-size: 11pt; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--teal); }
+
+  /* ACTORS */
+  .actors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .actor-card {
+    background: white; border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); border-top: 4px solid var(--teal); transition: all 0.2s;
+  }
+  .actor-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .actor-card:nth-child(1) { border-top-color: var(--teal); }
+  .actor-card:nth-child(2) { border-top-color: var(--blue); }
+  .actor-card:nth-child(3) { border-top-color: var(--orange); }
+  .actor-card:nth-child(4) { border-top-color: var(--gray); }
+  .actor-card:nth-child(5) { border-top-color: var(--teal-dark); }
+  .actor-emoji { font-size: 22pt; margin-bottom: 10px; }
+  .actor-title { font-weight: 700; font-size: 11pt; color: var(--teal-dark); margin-bottom: 6px; }
+  .actor-desc { font-size: 10.5pt; color: var(--text-soft); line-height: 1.6; }
+
+  /* STEPS */
+  .steps-list { display: flex; flex-direction: column; }
+  .step-item { display: flex; position: relative; }
+  .step-left { display: flex; flex-direction: column; align-items: center; width: 60px; min-width: 60px; }
+  .step-num {
+    width: 42px; height: 42px; border-radius: 50%; background: var(--teal); color: white;
+    font-size: 15pt; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; box-shadow: 0 0 0 4px var(--teal-light); position: relative; z-index: 1; font-weight: 700;
+  }
+  .step-line { width: 2px; background: var(--teal-mid); flex: 1; min-height: 20px; }
+  .step-item:last-child .step-line { display: none; }
+  .step-content {
+    background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 18px 22px; flex: 1; margin-bottom: 20px; margin-left: 14px;
+    border-left: 4px solid var(--teal); transition: all 0.2s; cursor: pointer;
+  }
+  .step-content:hover { box-shadow: var(--shadow-lg); transform: translateX(4px); }
+  .step-content.expanded { border-left-color: var(--orange); }
+  .step-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .step-actor {
+    font-size: 9pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--teal); background: var(--teal-light); padding: 3px 10px; border-radius: 20px;
+  }
+  .step-toggle { color: var(--gray); font-size: 14pt; transition: transform 0.3s; }
+  .step-content.expanded .step-toggle { transform: rotate(180deg); }
+  .step-title { font-weight: 700; font-size: 12pt; color: var(--teal-dark); margin-bottom: 4px; }
+  .step-short { font-size: 10.5pt; color: var(--text-soft); line-height: 1.6; }
+  .step-detail { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .step-content.expanded .step-detail { display: block; }
+  .step-detail p { font-size: 10.5pt; color: var(--text-soft); line-height: 1.7; margin-bottom: 10px; }
+
+  /* ALERTS */
+  .alert { display: flex; gap: 12px; padding: 14px 18px; border-radius: 10px; margin-top: 14px; }
+  .alert-warn { background: var(--orange-light); border: 1px solid var(--orange-mid); }
+  .alert-info { background: var(--blue-light); border: 1px solid var(--blue-mid); }
+  .alert-icon { font-size: 15pt; flex-shrink: 0; padding-top: 1px; }
+  .alert-text { font-size: 10.5pt; color: #6b3d0e; line-height: 1.6; }
+  .alert-text-teal { font-size: 10.5pt; color: var(--teal-dark); line-height: 1.6; }
+
+  /* FIELDS TABLE */
+  .fields-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .fields-table th { background: var(--teal-dark); color: white; font-size: 10.5pt; font-weight: 700; padding: 13px 16px; text-align: left; }
+  .fields-table td { padding: 13px 16px; font-size: 10.5pt; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.6; }
+  .fields-table tr:nth-child(even) td { background: var(--gray-light); }
+  .fields-table tr:last-child td { border-bottom: none; }
+  .fields-table tr:hover td { background: var(--teal-light); }
+  .field-name { font-weight: 700; color: var(--teal-dark); white-space: nowrap; }
+  .field-tag { display: inline-block; font-size: 9pt; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-top: 4px; }
+  .tag-central { background: var(--teal-light); color: var(--teal-dark); }
+  .tag-colegio { background: var(--blue-light); color: var(--blue); }
+
+  /* CATEGORIES */
+  .cats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cat-card { border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); transition: all 0.2s; border-left: 4px solid transparent; }
+  .cat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .cat-name { font-weight: 700; font-size: 11.5pt; margin-bottom: 4px; }
+  .cat-desc { font-size: 10.5pt; line-height: 1.5; }
+  .cat-cumplido { background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; }
+  .cat-cumplido .cat-name { color: #15803d; }
+  .cat-cumplido .cat-desc { color: #166534; }
+  .cat-proceso { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb; }
+  .cat-proceso .cat-name { color: #1d4ed8; }
+  .cat-proceso .cat-desc { color: #1e3a5f; }
+  .cat-pendiente { background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; }
+  .cat-pendiente .cat-name { color: #dc2626; }
+  .cat-pendiente .cat-desc { color: #7f1d1d; }
+  .cat-cancelado { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #9ca3af; }
+  .cat-cancelado .cat-name { color: #4b5563; }
+  .cat-cancelado .cat-desc { color: #6b7280; }
+
+  /* RECOMMENDATIONS */
+  .rec-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
+  .rec-header { padding: 16px 22px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background 0.2s; }
+  .rec-header:hover { background: var(--gray-light); }
+  .rec-icon-wrap { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20pt; flex-shrink: 0; }
+  .rec-title-wrap { flex: 1; }
+  .rec-title { font-weight: 700; font-size: 12pt; color: var(--teal-dark); }
+  .rec-sub { font-size: 10pt; color: var(--gray); margin-top: 2px; }
+  .rec-chevron { color: var(--gray); font-size: 16pt; transition: transform 0.3s; }
+  .rec-card.open .rec-chevron { transform: rotate(180deg); }
+  .rec-body { display: none; padding: 18px 22px 22px; border-top: 1px solid var(--border); }
+  .rec-card.open .rec-body { display: block; }
+
+  /* LINK CARD */
+  .link-card {
+    background: linear-gradient(135deg, var(--teal-dark), var(--blue));
+    border-radius: var(--radius-lg); padding: 30px; color: white;
+    position: relative; overflow: hidden; margin-bottom: 16px;
+  }
+  .link-card::before { content: ''; position: absolute; top: -30px; right: -30px; width: 110px; height: 110px; border-radius: 50%; background: rgba(246,141,46,0.2); }
+  .link-card h3 { font-size: 14pt; margin-bottom: 8px; font-weight: 700; }
+  .link-card p { font-size: 10.5pt; color: rgba(255,255,255,0.75); margin-bottom: 18px; line-height: 1.7; }
+  .link-url { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 13px 16px; }
+  .link-url a { font-size: 10pt; color: var(--orange); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .link-url a:hover { text-decoration: underline; }
+  .copy-btn { background: var(--orange); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 10pt; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit; }
+  .copy-btn:hover { background: #e07a20; transform: scale(1.03); }
+
+  /* UTILS */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: rgba(56,89,136,0.2); border-radius: 3px; }
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+  .text-muted { color: var(--text-soft); font-size: 10.5pt; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="org-tag">Alianza Educativa</span>
+      <h1>Manual CASE<br>Supervisión</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Introducción</div>
+      <a class="nav-item active" data-page="inicio">
+        <span class="icon">🏠</span> Inicio
+      </a>
+      <a class="nav-item" data-page="actores">
+        <span class="icon">👥</span> Roles y Responsabilidades
+      </a>
+
+      <div class="nav-section" style="margin-top:12px">Proceso</div>
+      <a class="nav-item" data-page="pasos">
+        <span class="icon">📋</span> Ciclo Paso a Paso
+      </a>
+
+      <div class="nav-section" style="margin-top:12px">Referencia</div>
+      <a class="nav-item" data-page="campos">
+        <span class="icon">🗂️</span> Campos del Archivo
+      </a>
+      <a class="nav-item" data-page="categorias">
+        <span class="icon">🏷️</span> Categorías de Avance
+      </a>
+
+      <div class="nav-section" style="margin-top:12px">Más</div>
+      <a class="nav-item" data-page="recomendaciones">
+        <span class="icon">💡</span> Recomendaciones
+      </a>
+      <a class="nav-item" data-page="acceso">
+        <span class="icon">🔗</span> Acceso en Línea
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-breadcrumb">
+        <span>Manual</span>
+        <span class="sep">›</span>
+        <span class="current" id="breadcrumb-current">Inicio</span>
+      </div>
+      <div class="topbar-right">
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- INICIO -->
+      <div class="page active" id="page-inicio">
+        <div class="hero-card">
+          <span class="code-tag">MANUAL DE USO · CASE</span>
+          <h2>Formato de Seguimiento de<br>Observaciones – Actas de Supervisión</h2>
+          <p>Guía interactiva para el registro, seguimiento y subsanación de observaciones derivadas de las visitas de supervisión de la SED a los Colegios en Administración del Servicio Educativo.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="icon-bg">📌</div>
+            <h3>Acerca del archivo</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Este archivo de Excel centraliza y hace seguimiento a <strong>todas las observaciones y recomendaciones</strong> registradas en las actas de las visitas de supervisión realizadas por la Secretaría de Educación Distrital (SED) a los colegios CASE.</p>
+            <div class="info-grid">
+              <div class="info-tile">📋 <strong>Registrar</strong> observaciones del acta de visita</div>
+              <div class="info-tile">🔍 <strong>Rastrear</strong> el estado de cada novedad</div>
+              <div class="info-tile">📊 <strong>Reportar</strong> avances de subsanación</div>
+              <div class="info-tile">📅 <strong>Consultar</strong> histórico desde 2018</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <button class="btn-primary" data-page="pasos">
+            Ver ciclo paso a paso →
+          </button>
+          <button class="btn-secondary" data-page="campos">
+            Ver campos del archivo
+          </button>
+        </div>
+      </div>
+
+      <!-- ACTORES -->
+      <div class="page" id="page-actores">
+        <div class="page-header">
+          <span class="tag">Equipo del Proceso</span>
+          <h2>Roles y Responsabilidades</h2>
+          <p>Cada actor tiene responsabilidades claramente definidas en el ciclo del archivo de seguimiento.</p>
+        </div>
+        <div class="actors-grid">
+          <div class="actor-card">
+            <div class="actor-emoji">🏛️</div>
+            <div class="actor-title">SED – Secretaría de Educación Distrital</div>
+            <div class="actor-desc">Realiza las visitas de supervisión y elabora el acta donde consigna las observaciones y/o recomendaciones por componente visitado.</div>
+          </div>
+          <div class="actor-card">
+            <div class="actor-emoji">🎓</div>
+            <div class="actor-title">Quien Atiende la Visita</div>
+            <div class="actor-desc">Participa en la visita. Antes de firmar el acta, debe revisar y verificar que las observaciones registradas sean coherentes con lo discutido durante la visita.</div>
+          </div>
+          <div class="actor-card">
+            <div class="actor-emoji">📤</div>
+            <div class="actor-title">Líder Administrativo del Colegio</div>
+            <div class="actor-desc">Envía el acta escaneada a Oficina Central al día hábil siguiente de la visita.</div>
+          </div>
+          <div class="actor-card">
+            <div class="actor-emoji">🏢</div>
+            <div class="actor-title">Responsable – Oficina Central</div>
+            <div class="actor-desc">Recibe el acta, ingresa la información al archivo de seguimiento, y notifica por correo a los colegios correspondientes cuando el archivo ha sido actualizado.</div>
+          </div>
+          <div class="actor-card" style="grid-column: span 2;">
+            <div class="actor-emoji">🏫</div>
+            <div class="actor-title">Colegio / Dependencias</div>
+            <div class="actor-desc">Registra los avances de subsanación de observaciones de las visitas SED en el archivo de seguimiento cuando es notificado.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASOS -->
+      <div class="page" id="page-pasos">
+        <div class="page-header">
+          <span class="tag">Ciclo del Proceso</span>
+          <h2>Paso a Paso</h2>
+          <p>Haz clic en cada paso para ver el detalle completo de instrucciones y responsabilidades.</p>
+        </div>
+
+        <div class="steps-list">
+
+          <div class="step-item">
+            <div class="step-left"><div class="step-num">1</div><div class="step-line"></div></div>
+            <div class="step-content" >
+              <div class="step-meta"><span class="step-actor">SED</span><span class="step-toggle">⌄</span></div>
+              <div class="step-title">Elaboración del Acta de Visita</div>
+              <div class="step-short">La SED finaliza la visita y elabora el acta con toda la información de la sesión.</div>
+              <div class="step-detail">
+                <p>Al terminar la visita de supervisión, el encargado de la SED elabora el <strong>acta de seguimiento</strong>. Este documento debe contener:</p>
+                <ul style="margin:10px 0 10px 20px;font-size:10.5pt;color:var(--text-soft);line-height:1.9">
+                  <li>Fecha de la visita (debe coincidir con la fecha de elaboración del acta)</li>
+                  <li>Hora de inicio y fin de la visita</li>
+                  <li>Nombre del colegio visitado</li>
+                  <li>Asunto y componente visitado</li>
+                  <li>Desarrollo de la agenda: observaciones y/o recomendaciones encontradas</li>
+                  <li>Firmas de: Rectoría, quien atiende la visita y el encargado de la visita por parte de la SED</li>
+                </ul>
+                <div class="alert alert-warn">
+                  <div class="alert-icon">⚠️</div>
+                  <div class="alert-text"><strong>Antes de firmar:</strong> todas las partes deben leer cuidadosamente lo consignado en el acta para verificar la coherencia con lo discutido durante la visita. Esto evita reprocesos posteriores.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-left"><div class="step-num">2</div><div class="step-line"></div></div>
+            <div class="step-content" >
+              <div class="step-meta"><span class="step-actor">Líder Administrativo – Colegio</span><span class="step-toggle">⌄</span></div>
+              <div class="step-title">Envío del Acta a Oficina Central</div>
+              <div class="step-short">El acta firmada y escaneada se envía por correo al día hábil siguiente.</div>
+              <div class="step-detail">
+                <p>Una vez firmada el acta, el <strong>Líder Administrativo del colegio</strong> envía por correo electrónico el acta escaneada a la oficina central. Este envío se realiza <strong>a más tardar al día hábil siguiente</strong> de la fecha de la visita.</p>
+                <div class="alert alert-info" style="margin-bottom:14px">
+                  <div class="alert-icon">📧</div>
+                  <div class="alert-text-teal"><strong>Enviar a:</strong> Karen Julieth Rodríguez Andrade — Facilitadora de APZ IA y Automatización Educativa<br><strong>krodriguez@alianzaeducativa.edu.co</strong></div>
+                </div>
+                <p>Requisitos del escaneo:</p>
+                <ul style="margin:8px 0 12px 20px;font-size:10.5pt;color:var(--text-soft);line-height:1.9">
+                  <li>El documento debe estar <strong>completo</strong> (todas las páginas, sin omitir ninguna)</li>
+                  <li>Debe ser <strong>legible</strong>, sin páginas borrosas o muy oscuras</li>
+                  <li>Las páginas deben estar en el <strong>sentido correcto de lectura</strong> (no giradas)</li>
+                  <li>Las <strong>firmas deben ser visibles</strong> y claramente identificables</li>
+                  <li>El archivo debe estar <strong>organizado</strong> (páginas en orden consecutivo)</li>
+                </ul>
+                <div class="alert alert-warn">
+                  <div class="alert-icon">⚠️</div>
+                  <div class="alert-text"><strong>Recuerda:</strong> las actas enviadas de forma ilegible, incompleta o en desorden generan retrasos en el registro y en la notificación a los colegios.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-left"><div class="step-num">3</div><div class="step-line"></div></div>
+            <div class="step-content" >
+              <div class="step-meta"><span class="step-actor">Oficina Central</span><span class="step-toggle">⌄</span></div>
+              <div class="step-title">Registro en el Archivo de Seguimiento</div>
+              <div class="step-short">La oficina central ingresa la información del acta en el archivo de seguimiento.</div>
+              <div class="step-detail">
+                <p>Una vez recibida el acta, el responsable de la oficina central diligenicia en el archivo de seguimiento los siguientes campos (en la pestaña del año correspondiente):</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0">
+                  <div style="background:var(--teal-light);border-radius:8px;padding:10px 14px;font-size:10.5pt;font-weight:700;color:var(--teal-dark)">🏫 Colegio</div>
+                  <div style="background:var(--teal-light);border-radius:8px;padding:10px 14px;font-size:10.5pt;font-weight:700;color:var(--teal-dark)">📝 Tema / Componente</div>
+                  <div style="background:var(--teal-light);border-radius:8px;padding:10px 14px;font-size:10.5pt;font-weight:700;color:var(--teal-dark)">🏛️ Entidad que visita</div>
+                  <div style="background:var(--teal-light);border-radius:8px;padding:10px 14px;font-size:10.5pt;font-weight:700;color:var(--teal-dark)">📅 Fecha del acta</div>
+                  <div style="background:var(--teal-light);border-radius:8px;padding:10px 14px;font-size:10.5pt;font-weight:700;color:var(--teal-dark);grid-column:span 2">📋 Observaciones en el acta</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-left"><div class="step-num">4</div><div class="step-line"></div></div>
+            <div class="step-content" >
+              <div class="step-meta"><span class="step-actor">Oficina Central</span><span class="step-toggle">⌄</span></div>
+              <div class="step-title">Notificación a los Colegios</div>
+              <div class="step-short">Se envía un correo a los colegios informando que el archivo ha sido actualizado.</div>
+              <div class="step-detail">
+                <p>Cuando el responsable de la oficina central actualiza el archivo con la nueva información, <strong>envía un correo</strong> a los colegios correspondientes informándoles:</p>
+                <ul style="margin:10px 0 0 20px;font-size:10.5pt;color:var(--text-soft);line-height:1.9">
+                  <li>Que el archivo ha sido actualizado con las observaciones del acta</li>
+                  <li>Que pueden ingresar al archivo para revisar las novedades</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-left"><div class="step-num">5</div><div class="step-line"></div></div>
+            <div class="step-content" >
+              <div class="step-meta"><span class="step-actor">Colegios / Dependencias</span><span class="step-toggle">⌄</span></div>
+              <div class="step-title">Registro de Avances de Subsanación</div>
+              <div class="step-short">Cada colegio ingresa al archivo y actualiza el avance de sus acciones de subsanación.</div>
+              <div class="step-detail">
+                <p>Una vez notificados, los colegios / dependencias ingresan al archivo y completan los campos de avance para cada observación asignada:</p>
+                <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0">
+                  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #16a34a;border-radius:8px;padding:12px 16px;">
+                    <div style="font-weight:700;font-size:10.5pt;color:#15803d;margin-bottom:4px">✏️ Acciones de Ajuste</div>
+                    <div style="font-size:10.5pt;color:#166534">Describir detalladamente las acciones concretas que se han adelantado para atender cada observación.</div>
+                  </div>
+                  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:8px;padding:12px 16px;">
+                    <div style="font-weight:700;font-size:10.5pt;color:#1d4ed8;margin-bottom:4px">🏷️ Categoría de Avances</div>
+                    <div style="font-size:10.5pt;color:#1e3a5f">Seleccionar el estado actual: <strong>Cumplido / En proceso / Pendiente / Cancelado</strong>.</div>
+                  </div>
+                  <div style="background:var(--gray-light);border:1px solid var(--gray-mid);border-left:4px solid var(--gray);border-radius:8px;padding:12px 16px;">
+                    <div style="font-weight:700;font-size:10.5pt;color:var(--teal-dark);margin-bottom:4px">📅 Fecha del Avance</div>
+                    <div style="font-size:10.5pt;color:var(--text-soft)">Registrar la fecha en que se actualiza el avance en formato DD/MM/AAAA.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CAMPOS -->
+      <div class="page" id="page-campos">
+        <div class="page-header">
+          <span class="tag">Referencia del Formato</span>
+          <h2>Campos del Archivo</h2>
+          <p>Descripción e instrucciones de cada campo que debe diligenciarse en el archivo de seguimiento.</p>
+        </div>
+
+        <table class="fields-table">
+          <thead>
+            <tr>
+              <th>Campo</th>
+              <th>Instrucción de Diligenciamiento</th>
+              <th>Responsable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="field-name">COLEGIO</td>
+              <td>Seleccionar de la lista desplegable el nombre del colegio que recibió la visita. No escribir manualmente.</td>
+              <td><span class="field-tag tag-central">Oficina Central</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">TEMA VISITA</td>
+              <td>Seleccionar de la lista el componente visitado: Biblioteca Escolar, Gestión documental, Inventarios, Material educativo, Matrículas, Planta física, Verificación estudiantes, etc.</td>
+              <td><span class="field-tag tag-central">Oficina Central</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">ENTIDAD QUE VISITA</td>
+              <td>Escribir el nombre de la entidad que realiza la visita. Ej: SED, Universidad Nacional de Colombia.</td>
+              <td><span class="field-tag tag-central">Oficina Central</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">FECHA ACTA</td>
+              <td>Ingresar la fecha del acta en formato DD/MM/AAAA. Debe coincidir con la fecha de la visita.</td>
+              <td><span class="field-tag tag-central">Oficina Central</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">OBSERVACIONES EN ACTA</td>
+              <td>Transcribir textualmente la tarea o la observación que quedó registrada en el acta. En auditorías de estudiantes, la observación que debe ser subsanada.</td>
+              <td><span class="field-tag tag-central">Oficina Central</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">ACCIONES DE AJUSTE</td>
+              <td>Describir detalladamente las acciones que se han adelantado para cumplir la tarea o subsanar la observación. Actualizar con cada nuevo avance.</td>
+              <td><span class="field-tag tag-colegio">Colegio</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">CATEGORÍA DE AVANCES</td>
+              <td>Seleccionar de la lista el estado actual: Cumplido, En proceso, Pendiente o Cancelado.</td>
+              <td><span class="field-tag tag-colegio">Colegio</span></td>
+            </tr>
+            <tr>
+              <td class="field-name">FECHA DEL AVANCE</td>
+              <td>Ingresar la fecha en que se registra o actualiza el avance en formato DD/MM/AAAA.</td>
+              <td><span class="field-tag tag-colegio">Colegio</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CATEGORÍAS -->
+      <div class="page" id="page-categorias">
+        <div class="page-header">
+          <span class="tag">Estados de Seguimiento</span>
+          <h2>Categorías de Avance</h2>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="icon-bg">🎨</div>
+            <h3>Codificación visual automática</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted" style="margin-bottom:24px">Al seleccionar una categoría. Esto permite identificar el estado de todas las observaciones de manera más eficiente.</p>
+
+            <div class="cats-grid">
+              <div class="cat-card cat-cumplido">
+                <div>
+                  <div class="cat-name">Cumplido</div>
+                  <div class="cat-desc">La observación fue atendida completamente.</div>
+                </div>
+              </div>
+              <div class="cat-card cat-proceso">
+                <div>
+                  <div class="cat-name">En proceso</div>
+                  <div class="cat-desc">Se están adelantando acciones pero aún no se ha completado.</div>
+                </div>
+              </div>
+              <div class="cat-card cat-pendiente">
+                <div>
+                  <div class="cat-name">Pendiente</div>
+                  <div class="cat-desc">Aún no se han iniciado acciones de atención.</div>
+                </div>
+              </div>
+              <div class="cat-card cat-cancelado">
+                <div>
+                  <div class="cat-name">Cancelado</div>
+                  <div class="cat-desc">La observación fue anulada o no aplica.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECOMENDACIONES -->
+      <div class="page" id="page-recomendaciones">
+        <div class="page-header">
+          <span class="tag">Buenas Prácticas</span>
+          <h2>Recomendaciones de Uso</h2>
+          <p>Lineamientos para garantizar la correcta operación del archivo y evitar errores o reprocesos.</p>
+        </div>
+
+        <div class="rec-card">
+          <div class="rec-header" >
+            <div class="rec-icon-wrap" style="background:var(--blue-light)">🔍</div>
+            <div class="rec-title-wrap">
+              <div class="rec-title">Uso correcto de filtros</div>
+              <div class="rec-sub">Para usuarios que trabajan el archivo simultáneamente</div>
+            </div>
+            <div class="rec-chevron">⌄</div>
+          </div>
+          <div class="rec-body">
+            <p class="text-muted" style="margin-bottom:14px">Dado que varias personas trabajan el archivo simultáneamente, al aplicar filtros hacerlo mediante la función de vistas de filtro para evitar afectar la vista de los demás colaboradores.</p>
+            <div style="background:var(--teal-dark);border-radius:10px;padding:16px 20px;font-size:11pt;color:var(--orange);font-weight:700;letter-spacing:0.5px">
+              Datos &nbsp;►&nbsp; Crear vista de filtro
+            </div>
+            <p class="text-muted" style="margin-top:14px">Al usar esta función, el filtro es personal y no modifica la vista del archivo para otros usuarios. Si filtras desde el menú convencional de filtros (ícono de embudo en la columna), esa acción afecta a <em>todos</em> quienes estén en el archivo en ese momento.</p>
+          </div>
+        </div>
+
+        <div class="rec-card">
+          <div class="rec-header" >
+            <div class="rec-icon-wrap" style="background:var(--orange-light)">📄</div>
+            <div class="rec-title-wrap">
+              <div class="rec-title">Envío de actas en condiciones óptimas</div>
+              <div class="rec-sub">Requisitos para el escaneo y el correo</div>
+            </div>
+            <div class="rec-chevron">⌄</div>
+          </div>
+          <div class="rec-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-light);border-radius:8px;font-size:10.5pt;"><span>✅</span><span><strong>Completa:</strong> incluir todas las páginas del acta, sin omitir ninguna.</span></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-light);border-radius:8px;font-size:10.5pt;"><span>✅</span><span><strong>Legible:</strong> el texto debe poder leerse claramente. Evitar páginas oscuras, borrosas o muy inclinadas.</span></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-light);border-radius:8px;font-size:10.5pt;"><span>✅</span><span><strong>En sentido correcto:</strong> las páginas no deben estar giradas o invertidas.</span></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-light);border-radius:8px;font-size:10.5pt;"><span>✅</span><span><strong>Con firmas visibles:</strong> las firmas de todas las partes deben ser claramente identificables.</span></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--gray-light);border-radius:8px;font-size:10.5pt;"><span>✅</span><span><strong>A tiempo:</strong> enviar al día hábil siguiente de la visita, no después.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rec-card">
+          <div class="rec-header" >
+            <div class="rec-icon-wrap" style="background:var(--orange-light)">✍️</div>
+            <div class="rec-title-wrap">
+              <div class="rec-title">Revisar el acta antes de firmar</div>
+              <div class="rec-sub">Paso clave para evitar reprocesos</div>
+            </div>
+            <div class="rec-chevron">⌄</div>
+          </div>
+          <div class="rec-body">
+            <p class="text-muted" style="margin-bottom:14px">Antes de proceder con la firma del acta, todas las partes (quien atiende la visita y el encargado de la SED) deben leer detenidamente las observaciones y/o recomendaciones registradas.</p>
+            <p class="text-muted"><strong>¿Por qué es importante?</strong> Una vez firmada el acta, cualquier corrección requiere un proceso adicional (reproceso) que demora la actualización del archivo de seguimiento. Detectar errores antes de firmar elimina este problema por completo.</p>
+            <div style="background:var(--orange-light);border:1px solid var(--orange-mid);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:10.5pt;color:#7c3811">
+              <strong>Verificar:</strong> que las fechas sean correctas, que las observaciones reflejen fielmente lo discutido, y que los compromisos estén bien identificados.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCESO -->
+      <div class="page" id="page-acceso">
+        <div class="page-header">
+          <span class="tag">Acceso en Línea</span>
+          <h2>Archivo en Google Sheets</h2>
+          <p>El archivo de seguimiento está disponible en Google Sheets para consulta y actualización colaborativa en tiempo real.</p>
+        </div>
+
+        <div class="link-card">
+          <h3>🔗 Enlace de acceso al archivo</h3>
+          <p>Acceso habilitado para todos los colaboradores autorizados. Recuerda siempre usar <strong>«Crear vista de filtro»</strong> al aplicar filtros dentro del archivo.</p>
+          <div class="link-url">
+            <a href="https://docs.google.com/spreadsheets/d/15m64HbU3a4KGDmx1KURAjc37cjd01pc5FND8eTtKXsg/edit#gid=530599731" target="_blank">
+              docs.google.com/spreadsheets/d/15m64HbU3a4KGDmx1KURAjc37cjd01pc5FND8eTtKXsg
+            </a>
+            <button class="copy-btn" >Copiar</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+          <div class="card">
+            <div class="card-header"><div class="icon-bg">⚡</div><h3>Acceso colaborativo</h3></div>
+            <div class="card-body"><p class="text-muted">Múltiples personas pueden editar el archivo simultáneamente. Los cambios se guardan en tiempo real.</p></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="icon-bg">🔒</div><h3>Acceso controlado</h3></div>
+            <div class="card-body"><p class="text-muted">El acceso es gestionado por la oficina central. Contactar al responsable si no tienes permisos de edición.</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+  var breadcrumbs = {
+    inicio: 'Inicio', actores: 'Roles y Responsabilidades', pasos: 'Ciclo Paso a Paso',
+    campos: 'Campos del Archivo', categorias: 'Categorias de Avance',
+    recomendaciones: 'Recomendaciones', acceso: 'Acceso en Linea'
+  };
+
+  function navigate(pageId, navEl) {
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    var target = document.getElementById('page-' + pageId);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    if (navEl) navEl.classList.add('active');
+    var bc = document.getElementById('breadcrumb-current');
+    if (bc) bc.textContent = breadcrumbs[pageId] || pageId;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        navigate(el.getAttribute('data-page'), el);
+      });
+    });
+
+    document.querySelectorAll('button[data-page]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        var pageId = el.getAttribute('data-page');
+        var navEl = document.querySelector('.nav-item[data-page="' + pageId + '"]');
+        navigate(pageId, navEl);
+      });
+    });
+
+    document.querySelectorAll('.step-content').forEach(function(el) {
+      el.addEventListener('click', function() { el.classList.toggle('expanded'); });
+    });
+
+    document.querySelectorAll('.rec-header').forEach(function(el) {
+      el.addEventListener('click', function() { el.parentElement.classList.toggle('open'); });
+    });
+
+    var copyBtn = document.querySelector('.copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function() {
+        var url = 'https://docs.google.com/spreadsheets/d/15m64HbU3a4KGDmx1KURAjc37cjd01pc5FND8eTtKXsg/edit#gid=530599731';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function() {
+            copyBtn.textContent = 'Copiado!';
+            copyBtn.style.background = '#16a34a';
+            setTimeout(function() { copyBtn.textContent = 'Copiar'; copyBtn.style.background = 'var(--orange)'; }, 2000);
+          });
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = url; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+          copyBtn.textContent = 'Copiado!';
+          setTimeout(function() { copyBtn.textContent = 'Copiar'; }, 2000);
+        }
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>
